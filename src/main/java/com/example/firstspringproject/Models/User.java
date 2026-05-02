@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "users")
 public class User {
+    // constructors
     public User() {}
 
     @Id
@@ -18,10 +19,8 @@ public class User {
     private String password;
 
     // ✅ ADD THIS
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = false)
     private String username;
-
-    // constructors
 
     // getters & setters
     public Long getId() { return id; }

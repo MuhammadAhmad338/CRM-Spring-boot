@@ -1,5 +1,8 @@
 package com.example.firstspringproject.Services;
 
+import com.example.firstspringproject.AppConfig.JwtService;
+import com.example.firstspringproject.Models.AuthResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.firstspringproject.Models.User;
 import com.example.firstspringproject.Models.LoginRequest;
@@ -12,6 +15,8 @@ public class AuthService {
 
     private final AuthRepository repo;
     private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private JwtService jwtService;
 
     public AuthService(AuthRepository repo, PasswordEncoder passwordEncoder) {
         this.repo = repo;
@@ -19,7 +24,7 @@ public class AuthService {
     }
 
     // SIGNUP
-    public User signup(SignupRequest request) {
+    public AuthResponse signup(SignupRequest request) {
 
         if (repo.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email already registered");
@@ -30,11 +35,19 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        return repo.save(user);
-    }
+        User savedUser = repo.save(user);
 
+        String token = jwtService.generateToken(savedUser.getEmail());
+
+        return new AuthResponse(
+                token,
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getUsername()
+        );
+    }
     // LOGIN
-    public User login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
 
         User user = repo.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -43,6 +56,17 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        return user;
+
+
+            String token = jwtService.generateToken(user.getEmail());
+
+            return new AuthResponse(
+                    token,
+                    user.getId(),
+                    user.getEmail(),
+                    user.getUsername()
+            );
+
+
     }
 }
